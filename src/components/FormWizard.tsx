@@ -14,6 +14,7 @@ import {
 import { saveQuestionnaire } from '@/lib/firestore';
 import { notifyDiscord } from '@/app/actions';
 import { ThemeToggle } from './ThemeToggle';
+import { AccessibilityWidget } from './AccessibilityWidget';
 import { Step1 } from './steps/Step1';
 import { Step2 } from './steps/Step2';
 import { Step3 } from './steps/Step3';
@@ -55,8 +56,8 @@ export function FormWizard() {
     saveStepToStorage(step);
   }, [data, step, submitted]);
 
-  // Scroll to top when changing steps
-  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
+  // Scroll to top-left when changing steps (left:0 resets any stuck horizontal scroll)
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); }, [step]);
 
   const onChange = useCallback((field: keyof QuestionnaireData, value: string | string[]) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -86,41 +87,55 @@ export function FormWizard() {
   const progress = (step / 10) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+    <div className="min-h-screen w-full flex flex-col bg-[var(--bg)]">
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-10 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--border)] transition-all duration-300">
-        <div className="max-w-2xl mx-auto px-4">
-          <div className={`flex items-center gap-3 transition-all duration-300 ${scrolled ? 'py-2' : 'py-3'}`}>
-            {/* Logo — shrinks on scroll, white in dark mode */}
-            <Image
-              src="/opusliberi-logo.png"
-              alt="Opus Liberi"
-              width={257}
-              height={40}
-              className={`flex-shrink-0 object-contain dark:brightness-0 dark:invert transition-all duration-300 w-auto ${scrolled ? 'h-5' : 'h-8'}`}
-              priority
-            />
-
-            {/* Step info — fades in when scrolled */}
-            <div className={`flex-1 min-w-0 transition-all duration-300 ${scrolled ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-              <p className="text-xs text-[var(--text-secondary)] truncate">
-                {currentStepInfo.icon} {currentStepInfo.title}
-              </p>
+      <header className="sticky top-0 z-10 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--border)]">
+        <div className="max-w-2xl mx-auto w-full px-4">
+          {/* Top row: logo + controls */}
+          <div className={`flex items-center justify-between gap-2 transition-all duration-300 ${scrolled ? 'py-2' : 'py-3'}`}>
+            {/* Logo — px sizing so it never scales with a11y font-size */}
+            <div
+              className="relative overflow-hidden flex-shrink-0"
+              style={{
+                height: scrolled ? '20px' : '30px',
+                width: `min(${scrolled ? '120px' : '180px'}, 42vw)`,
+                transition: 'width 300ms, height 300ms',
+              }}
+            >
+              <Image
+                src="/opusliberi-logo.png"
+                alt="Opus Liberi"
+                fill
+                className="object-contain object-left dark:brightness-0 dark:invert"
+                priority
+              />
             </div>
 
-            <span className="text-xs font-medium text-[var(--text-secondary)] tabular-nums flex-shrink-0">
-              {step} / 10
-            </span>
-            <ThemeToggle />
+            {/* Controls */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <AccessibilityWidget />
+              <ThemeToggle />
+            </div>
           </div>
-        </div>
 
-        {/* Progress bar */}
-        <div className="h-0.5 bg-[var(--border)]" role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={10}>
-          <div
-            className="h-full bg-[var(--brand)] transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
+          {/* Progress row: bar + counter */}
+          <div className="flex items-center gap-3 pb-2.5">
+            <div
+              className="flex-1 h-1.5 rounded-full bg-[var(--border)] overflow-hidden"
+              role="progressbar"
+              aria-valuenow={step}
+              aria-valuemin={1}
+              aria-valuemax={10}
+            >
+              <div
+                className="h-full rounded-full bg-[var(--brand)] transition-all duration-500 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <span className="text-xs font-medium text-[var(--text-secondary)] tabular-nums flex-shrink-0">
+              {currentStepInfo.icon} {step}/10
+            </span>
+          </div>
         </div>
       </header>
 

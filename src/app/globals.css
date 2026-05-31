@@ -52,6 +52,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html, body {
+  overflow-x: clip; /* bloqueia scroll horizontal, sem criar scroll-container (não quebra sticky) */
+  max-width: 100%;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);
@@ -62,4 +67,37 @@ body {
 /* React Aria focus-visible */
 :focus-visible {
   outline: none;
+}
+
+/* ── Accessibility: font scaling ─────────────────────────────────────────── */
+/* All rem-based Tailwind sizes scale with the root font-size */
+:root[data-a11y-size="large"]  { font-size: 19px; }
+:root[data-a11y-size="xlarge"] { font-size: 22px; }
+
+/* ── Accessibility: high contrast – light mode ───────────────────────────── */
+:root[data-a11y-contrast="high"]:not(.dark) {
+  --text:           #000000;
+  --text-secondary: #111111;
+  --text-muted:     #3d3d3d;
+  --bg:             #ffffff;
+  --card:           #f2f2f2;
+  --card-soft:      #e8e8e8;
+  --border:         #000000;
+  --brand:          #1400c8;
+  --brand-hover:    #0f009e;
+  --brand-subtle:   #e8e4ff;
+}
+
+/* ── Accessibility: high contrast – dark mode ────────────────────────────── */
+:root.dark[data-a11y-contrast="high"] {
+  --text:           #ffffff;
+  --text-secondary: #f5f5f5;
+  --text-muted:     #d4d4d4;
+  --bg:             #000000;
+  --card:           #0d0d0d;
+  --card-soft:      #1a1a1a;
+  --border:         #d4d4d4;
+  --brand:          #c4b5fd;
+  --brand-hover:    #ddd6fe;
+  --brand-subtle:   #2e1065;
 }

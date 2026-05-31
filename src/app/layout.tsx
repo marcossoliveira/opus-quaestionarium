@@ -21,6 +21,17 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      {/* Apply saved a11y settings synchronously to avoid flash */}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            var s = localStorage.getItem('a11y-size') || 'normal';
+            var c = localStorage.getItem('a11y-contrast') || 'normal';
+            document.documentElement.setAttribute('data-a11y-size', s);
+            document.documentElement.setAttribute('data-a11y-contrast', c);
+          } catch(e) {}
+        `}} />
+      </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}

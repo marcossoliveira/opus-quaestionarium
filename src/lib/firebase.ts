@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,3 +16,15 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const auth = getAuth(app);
+
+let signInPromise: Promise<unknown> | null = null;
+
+// O questionário é público: garante uma sessão anônima antes de operações que
+// exigem token nas regras do Storage (upload de foto). Memoizado para não
+// disparar múltiplos sign-ins em chamadas concorrentes.
+export function ensureAnonymousAuth(): Promise<unknown> {
+  if (auth.currentUser) return Promise.resolve();
+  if (!signInPromise) signInPromise = signInAnonymously(auth);
+  return signInPromise;
+}

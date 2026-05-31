@@ -75,7 +75,8 @@ function PhotoUpload({
       onChange(downloadUrl);
       URL.revokeObjectURL(blobUrl);
       setPreview(downloadUrl);
-    } catch {
+    } catch (err) {
+      console.error('Falha no upload da foto:', err);
       setError('Erro ao enviar a foto. Tente novamente.');
       setPreview('');
       onChange('');
