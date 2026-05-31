@@ -151,8 +151,8 @@ export function AccessibilityWidget() {
               <span
                 aria-hidden="true"
                 className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm
-                  transition-transform duration-200
-                  ${highContrast ? 'translate-x-[22px]' : 'translate-x-[2px]'}`}
+                  transition-all duration-200
+                  ${highContrast ? 'left-[22px]' : 'left-0.5'}`}
               />
             </button>
           </div>
