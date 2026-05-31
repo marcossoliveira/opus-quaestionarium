@@ -69,6 +69,12 @@ body {
   outline: none;
 }
 
+/* iOS Safari dá auto-zoom quando um campo focado tem font-size < 16px.
+   Mantém os controles em >= 16px (1rem) — escala junto com o ajuste de fonte da acessibilidade. */
+input, textarea, select {
+  font-size: max(1rem, 16px);
+}
+
 /* ── Accessibility: font scaling ─────────────────────────────────────────── */
 /* All rem-based Tailwind sizes scale with the root font-size */
 :root[data-a11y-size="large"]  { font-size: 19px; }
