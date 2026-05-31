@@ -1,10 +1,211 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { RadioGroup, Label } from 'react-aria-components';
+import { Checkbox, RadioGroup, Label } from 'react-aria-components';
 import { FieldInput } from '@/components/ui/FieldInput';
 import { RadioOption } from '@/components/ui/RadioOption';
+import { uploadPhoto } from '@/lib/upload';
 import type { StepProps } from '@/types/form';
+
+// ─── Inline checkbox (para opções de conveniência) ───────────────────────────
+
+function InlineCheckbox({
+  isSelected,
+  onChange,
+  children,
+}: {
+  isSelected: boolean;
+  onChange: (v: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Checkbox
+      isSelected={isSelected}
+      onChange={onChange}
+      className="group flex items-center gap-2.5 cursor-pointer outline-none w-fit"
+    >
+      <div
+        className="w-4 h-4 rounded border-2 border-[var(--border)] flex items-center justify-center
+          flex-shrink-0 transition-all
+          group-data-[selected]:border-[var(--brand)] group-data-[selected]:bg-[var(--brand)]
+          group-data-[focus-visible]:ring-2 group-data-[focus-visible]:ring-[var(--brand)]
+          group-data-[focus-visible]:ring-offset-2 group-data-[focus-visible]:ring-offset-[var(--card)]"
+      >
+        <svg viewBox="0 0 10 8" fill="none" stroke="white" strokeWidth={1.8}
+          className="w-2.5 h-2 opacity-0 group-data-[selected]:opacity-100 transition-opacity">
+          <polyline points="1,4 4,7 9,1" />
+        </svg>
+      </div>
+      <span className="text-sm text-[var(--text-secondary)] leading-snug">{children}</span>
+    </Checkbox>
+  );
+}
+
+// ─── Photo picker ─────────────────────────────────────────────────────────────
+
+function PhotoUpload({
+  fotoUrl,
+  onChange,
+}: {
+  fotoUrl: string;
+  onChange: (url: string) => void;
+}) {
+  const [preview, setPreview] = useState(fotoUrl);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (fotoUrl && fotoUrl !== preview) setPreview(fotoUrl);
+  }, [fotoUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError('A foto deve ter no máximo 5 MB.'); return; }
+
+    const blobUrl = URL.createObjectURL(file);
+    setPreview(blobUrl);
+    setError('');
+    setUploading(true);
+
+    try {
+      const downloadUrl = await uploadPhoto(file);
+      onChange(downloadUrl);
+      URL.revokeObjectURL(blobUrl);
+      setPreview(downloadUrl);
+    } catch {
+      setError('Erro ao enviar a foto. Tente novamente.');
+      setPreview('');
+      onChange('');
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  }
+
+  function handleRemove(e: React.MouseEvent) {
+    e.stopPropagation();
+    setPreview('');
+    onChange('');
+    if (inputRef.current) inputRef.current.value = '';
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          aria-label={preview ? 'Alterar foto de perfil' : 'Adicionar foto de perfil'}
+          className="relative w-24 h-24 rounded-full overflow-hidden
+            border-2 border-dashed border-[var(--border)]
+            hover:border-[var(--brand)] transition-all duration-200 group
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]
+            focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
+          disabled={uploading}
+        >
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt="Foto de perfil" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-1
+              bg-[var(--card-soft)] group-hover:bg-[var(--brand-subtle)] transition-colors">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}
+                className="w-7 h-7 text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              <span className="text-[10px] font-medium text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors">
+                Adicionar
+              </span>
+            </div>
+          )}
+          {preview && !uploading && (
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100
+              transition-opacity flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.8} className="w-6 h-6">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            </div>
+          )}
+          {uploading && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"
+                  strokeDasharray="62" strokeDashoffset="20" />
+              </svg>
+            </div>
+          )}
+        </button>
+
+        {preview && !uploading && (
+          <button
+            type="button"
+            onClick={handleRemove}
+            aria-label="Remover foto"
+            className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full
+              bg-[var(--card)] border border-[var(--border)]
+              flex items-center justify-center shadow-sm
+              hover:bg-red-50 hover:border-red-300 dark:hover:bg-red-950 transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+              className="w-3 h-3 text-[var(--text-muted)]">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      <div className="text-center">
+        <p className="text-xs text-[var(--text-secondary)]">
+          {uploading ? 'Enviando foto…' : preview ? 'Clique para alterar' : 'Foto de perfil'}
+          {!uploading && <span className="text-[var(--text-muted)] ml-1">(opcional)</span>}
+        </p>
+        {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
+      </div>
+
+      {!preview && !uploading && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => cameraRef.current?.click()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)]
+              text-xs text-[var(--text-secondary)] hover:border-[var(--brand)] hover:text-[var(--brand)]
+              transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-3.5 h-3.5">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            Tirar foto
+          </button>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)]
+              text-xs text-[var(--text-secondary)] hover:border-[var(--brand)] hover:text-[var(--brand)]
+              transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-3.5 h-3.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+            Galeria
+          </button>
+        </div>
+      )}
+
+      <input ref={inputRef} type="file" accept="image/*" className="sr-only" onChange={handleFile} />
+      <input ref={cameraRef} type="file" accept="image/*" capture="user" className="sr-only" onChange={handleFile} />
+    </div>
+  );
+}
+
+// ─── Step 1 ───────────────────────────────────────────────────────────────────
 
 export function Step1({ data, onChange }: StepProps) {
   const [cepLoading, setCepLoading] = useState(false);
@@ -15,16 +216,12 @@ export function Step1({ data, onChange }: StepProps) {
     const clean = data.cep.replace(/\D/g, '');
     if (clean.length !== 8 || clean === prevCep.current) return;
     prevCep.current = clean;
-
     setCepLoading(true);
     setCepError('');
     fetch(`https://viacep.com.br/ws/${clean}/json/`)
       .then((r) => r.json())
       .then((json) => {
-        if (json.erro) {
-          setCepError('CEP não encontrado.');
-          return;
-        }
+        if (json.erro) { setCepError('CEP não encontrado.'); return; }
         onChange('rua', json.logradouro || '');
         onChange('bairro', json.bairro || '');
         onChange('cidade', json.localidade || '');
@@ -34,13 +231,23 @@ export function Step1({ data, onChange }: StepProps) {
       .finally(() => setCepLoading(false));
   }, [data.cep, onChange]);
 
-  function formatCep(value: string) {
-    const d = value.replace(/\D/g, '').slice(0, 8);
+  function formatCep(v: string) {
+    const d = v.replace(/\D/g, '').slice(0, 8);
     return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
   }
 
+  const nomeIgual = data.nomeArtisticoIgualNome === 'sim';
+  const unificado = data.rgCpfUnificados === 'sim';
+
   return (
     <div className="flex flex-col gap-6">
+
+      {/* Foto */}
+      <PhotoUpload fotoUrl={data.fotoUrl} onChange={(url) => onChange('fotoUrl', url)} />
+
+      <div className="border-t border-[var(--border)]" />
+
+      {/* Nome completo */}
       <FieldInput
         label="Nome completo"
         value={data.nomeCompleto}
@@ -49,6 +256,29 @@ export function Step1({ data, onChange }: StepProps) {
         isRequired
       />
 
+      {/* Nome artístico */}
+      <div className="flex flex-col gap-3">
+        <InlineCheckbox
+          isSelected={nomeIgual}
+          onChange={(checked) => {
+            onChange('nomeArtisticoIgualNome', checked ? 'sim' : '');
+            onChange('nomeArtistico', checked ? data.nomeCompleto : '');
+          }}
+        >
+          Usar meu nome completo como nome artístico
+        </InlineCheckbox>
+        {!nomeIgual && (
+          <FieldInput
+            label="Nome artístico"
+            value={data.nomeArtistico}
+            onChange={(v) => onChange('nomeArtistico', v)}
+            placeholder="Nome pelo qual é conhecido(a) no coral"
+            description="Como prefere ser chamado(a) nas apresentações"
+          />
+        )}
+      </div>
+
+      {/* Endereço */}
       <div className="flex flex-col gap-4">
         <p className="text-sm font-semibold text-[var(--text)]">Endereço</p>
 
@@ -65,19 +295,24 @@ export function Step1({ data, onChange }: StepProps) {
           {cepError && <p className="text-xs text-red-500">{cepError}</p>}
         </div>
 
-        <div className="grid grid-cols-[1fr_auto] gap-3">
-          <FieldInput
-            label="Rua / Logradouro"
-            value={data.rua}
-            onChange={(v) => onChange('rua', v)}
-            placeholder="Nome da rua"
-          />
-          <FieldInput
-            label="Número"
-            value={data.numero}
-            onChange={(v) => onChange('numero', v)}
-            placeholder="Nº"
-          />
+        {/* Rua + Número: flex para evitar overflow */}
+        <div className="flex gap-3 min-w-0">
+          <div className="flex-1 min-w-0">
+            <FieldInput
+              label="Rua / Logradouro"
+              value={data.rua}
+              onChange={(v) => onChange('rua', v)}
+              placeholder="Nome da rua"
+            />
+          </div>
+          <div className="w-24 flex-shrink-0">
+            <FieldInput
+              label="Número"
+              value={data.numero}
+              onChange={(v) => onChange('numero', v)}
+              placeholder="Nº"
+            />
+          </div>
         </div>
 
         <FieldInput
@@ -87,7 +322,8 @@ export function Step1({ data, onChange }: StepProps) {
           placeholder="Apto, bloco… (opcional)"
         />
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* Bairro + Cidade */}
+        <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
           <FieldInput
             label="Bairro"
             value={data.bairro}
@@ -103,22 +339,46 @@ export function Step1({ data, onChange }: StepProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <FieldInput
-          label="RG"
-          value={data.rg}
-          onChange={(v) => onChange('rg', v)}
-          placeholder="00.000.000-0"
-        />
-        <FieldInput
-          label="CPF"
-          value={data.cpf}
-          onChange={(v) => onChange('cpf', v)}
-          placeholder="000.000.000-00"
-          inputMode="numeric"
-        />
+      {/* Documentos */}
+      <div className="flex flex-col gap-3">
+        <InlineCheckbox
+          isSelected={unificado}
+          onChange={(checked) => {
+            onChange('rgCpfUnificados', checked ? 'sim' : '');
+            if (checked) onChange('cpf', '');
+          }}
+        >
+          Já possuo o CIN — informarei apenas este documento (número igual ao CPF)
+        </InlineCheckbox>
+
+        {unificado ? (
+          <FieldInput
+            label="Número do CIN / CPF"
+            value={data.cpf}
+            onChange={(v) => onChange('cpf', v)}
+            placeholder="000.000.000-00"
+            inputMode="numeric"
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
+            <FieldInput
+              label="CPF"
+              value={data.cpf}
+              onChange={(v) => onChange('cpf', v)}
+              placeholder="000.000.000-00"
+              inputMode="numeric"
+            />
+            <FieldInput
+              label="RG"
+              value={data.rg}
+              onChange={(v) => onChange('rg', v)}
+              placeholder="00.000.000-0"
+            />
+          </div>
+        )}
       </div>
 
+      {/* Naipe */}
       <RadioGroup
         value={data.naipe}
         onChange={(v) => onChange('naipe', v)}
@@ -144,6 +404,7 @@ export function Step1({ data, onChange }: StepProps) {
         />
       )}
 
+      {/* Tempo no coral */}
       <RadioGroup
         value={data.tempoCoral}
         onChange={(v) => onChange('tempoCoral', v)}
@@ -159,6 +420,7 @@ export function Step1({ data, onChange }: StepProps) {
           ))}
         </div>
       </RadioGroup>
+
     </div>
   );
 }

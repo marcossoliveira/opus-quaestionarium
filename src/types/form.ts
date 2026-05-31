@@ -1,6 +1,10 @@
 export interface QuestionnaireData {
   // 1. Identificação básica
+  fotoUrl: string;
   nomeCompleto: string;
+  nomeArtistico: string;
+  nomeArtisticoIgualNome: string;
+  rgCpfUnificados: string;
   cep: string;
   rua: string;
   numero: string;
@@ -68,7 +72,11 @@ export interface QuestionnaireData {
 }
 
 export const defaultFormData: QuestionnaireData = {
+  fotoUrl: '',
   nomeCompleto: '',
+  nomeArtistico: '',
+  nomeArtisticoIgualNome: '',
+  rgCpfUnificados: '',
   cep: '',
   rua: '',
   numero: '',

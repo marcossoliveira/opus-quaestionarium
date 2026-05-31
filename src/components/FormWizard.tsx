@@ -34,15 +34,19 @@ export function FormWizard() {
   const [submitError, setSubmitError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const savedData = loadFromStorage();
     const savedStep = loadStepFromStorage();
-    if (savedData) {
-      setData(savedData);
-      setHasSaved(true);
-    }
+    if (savedData) { setData(savedData); setHasSaved(true); }
     if (savedStep >= 1 && savedStep <= 10) setStep(savedStep);
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 48);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
@@ -50,6 +54,9 @@ export function FormWizard() {
     saveToStorage(data);
     saveStepToStorage(step);
   }, [data, step, submitted]);
+
+  // Scroll to top when changing steps
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
 
   const onChange = useCallback((field: keyof QuestionnaireData, value: string | string[]) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -80,22 +87,32 @@ export function FormWizard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-[var(--bg)]/95 backdrop-blur border-b border-[var(--border)]">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Image src="/opusliberi-logo.png" alt="Opus Liberi" width={32} height={32} className="flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-[var(--brand)] uppercase tracking-wider truncate">
-              Coral Opus Liberi
-            </p>
-            <p className="text-xs text-[var(--text-secondary)] truncate">
-              {currentStepInfo.icon} {currentStepInfo.title}
-            </p>
+      {/* ── Sticky header ── */}
+      <header className="sticky top-0 z-10 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--border)] transition-all duration-300">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className={`flex items-center gap-3 transition-all duration-300 ${scrolled ? 'py-2' : 'py-3'}`}>
+            {/* Logo — shrinks on scroll, white in dark mode */}
+            <Image
+              src="/opusliberi-logo.png"
+              alt="Opus Liberi"
+              width={257}
+              height={40}
+              className={`flex-shrink-0 object-contain dark:brightness-0 dark:invert transition-all duration-300 w-auto ${scrolled ? 'h-5' : 'h-8'}`}
+              priority
+            />
+
+            {/* Step info — fades in when scrolled */}
+            <div className={`flex-1 min-w-0 transition-all duration-300 ${scrolled ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <p className="text-xs text-[var(--text-secondary)] truncate">
+                {currentStepInfo.icon} {currentStepInfo.title}
+              </p>
+            </div>
+
+            <span className="text-xs font-medium text-[var(--text-secondary)] tabular-nums flex-shrink-0">
+              {step} / 10
+            </span>
+            <ThemeToggle />
           </div>
-          <span className="text-xs font-medium text-[var(--text-secondary)] tabular-nums flex-shrink-0">
-            {step} / 10
-          </span>
-          <ThemeToggle />
         </div>
 
         {/* Progress bar */}
@@ -135,9 +152,9 @@ export function FormWizard() {
         </p>
       </div>
 
-      {/* Form content */}
+      {/* Form card */}
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 pb-8">
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm overflow-hidden">
           <StepComponent data={data} onChange={onChange} />
         </div>
 
@@ -225,7 +242,13 @@ function SuccessScreen() {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <Image src="/opusliberi-logo.png" alt="Opus Liberi" width={56} height={56} />
+        <Image
+          src="/opusliberi-logo.png"
+          alt="Opus Liberi"
+          width={257}
+          height={40}
+          className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
+        />
         <div>
           <h1 className="text-2xl font-bold text-[var(--text)]">Obrigado!</h1>
           <p className="text-[var(--text-secondary)] mt-2 text-sm leading-relaxed">

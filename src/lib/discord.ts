@@ -21,6 +21,7 @@ export async function sendDiscordNotification(data: QuestionnaireData): Promise<
           `Um novo coralista respondeu o questionário socioeconômico do **Coral Opus Liberi**.\n\n` +
           `> As informações são confidenciais e destinadas exclusivamente à diretoria.`,
         color: 0x4206e3,
+        ...(data.fotoUrl ? { thumbnail: { url: data.fotoUrl } } : {}),
         fields: [
           field('👤 Nome completo', data.nomeCompleto),
           field('🎵 Naipe', naipeDisplay),

@@ -47,7 +47,7 @@ export function FieldInput({
         placeholder={placeholder}
         inputMode={inputMode}
         maxLength={maxLength}
-        className="px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--card)]
+        className="w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--card)]
           text-sm text-[var(--text)] placeholder:text-[var(--text-muted)]
           outline-none transition-all
           focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2
