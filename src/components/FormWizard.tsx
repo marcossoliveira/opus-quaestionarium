@@ -36,13 +36,20 @@ export function FormWizard() {
   const [submitted, setSubmitted] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     const savedData = loadFromStorage();
     const savedStep = loadStepFromStorage();
     if (savedData) { setData(savedData); setHasSaved(true); }
     if (savedStep >= 1 && savedStep <= 10) setStep(savedStep);
+    try { if (localStorage.getItem('opus-started') === '1') setStarted(true); } catch { }
   }, []);
+
+  function handleStart() {
+    setStarted(true);
+    try { localStorage.setItem('opus-started', '1'); } catch { }
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 48);
@@ -70,6 +77,7 @@ export function FormWizard() {
       await saveQuestionnaire(data);
       await notifyDiscord(data);
       clearStorage();
+      try { localStorage.removeItem('opus-started'); } catch { }
       setSubmitted(true);
     } catch (e) {
       console.error(e);
@@ -80,6 +88,7 @@ export function FormWizard() {
   }
 
   if (submitted) return <SuccessScreen />;
+  if (!started) return <IntroScreen onStart={handleStart} />;
 
   const StepComponent = STEP_COMPONENTS[step - 1];
   const currentStepInfo = STEPS[step - 1];
@@ -233,16 +242,119 @@ export function FormWizard() {
               key={s.number}
               onClick={() => setStep(s.number)}
               aria-label={`Ir para seção ${s.number}: ${s.title}`}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                s.number === step
-                  ? 'w-6 bg-[var(--brand)]'
-                  : s.number < step
+              className={`h-1.5 rounded-full transition-all duration-300 ${s.number === step
+                ? 'w-6 bg-[var(--brand)]'
+                : s.number < step
                   ? 'w-1.5 bg-[var(--brand)]/50'
                   : 'w-1.5 bg-[var(--border)]'
-              }`}
+                }`}
             />
           ))}
         </div>
+      </main>
+    </div>
+  );
+}
+
+function IntroScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <div className="min-h-screen w-full flex flex-col bg-[var(--bg)]">
+      {/* Minimal header — accessibility available from the start */}
+      <header className="sticky top-0 z-10 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--border)]">
+        <div className="max-w-2xl mx-auto w-full px-4 py-3 flex items-center justify-between gap-2">
+          <div className="relative overflow-hidden flex-shrink-0" style={{ height: '26px', width: 'min(160px, 42vw)' }}>
+            <Image
+              src="/opusliberi-logo.png"
+              alt="Opus Liberi"
+              fill
+              className="object-contain object-left dark:brightness-0 dark:invert"
+              priority
+            />
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <AccessibilityWidget />
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-8 flex flex-col gap-6">
+        {/* Hero */}
+        <div className="flex flex-col items-center text-center gap-4 pt-2">
+          <div className="relative w-20 h-20">
+            <Image
+              src="/opusliberi-logo.png"
+              alt="Opus Liberi"
+              fill
+              className="object-contain dark:brightness-0 dark:invert"
+            />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-[var(--text)]">Questionário de Adesão e Socioeconômico</h1>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Coro Opus Liberi</p>
+          </div>
+        </div>
+
+        {/* Purpose */}
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 flex flex-col gap-5 shadow-sm">
+          <div className="flex gap-3">
+            <span className="text-xl flex-shrink-0 leading-none">🎯</span>
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text)]">Por que estamos perguntando</h2>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-1">
+                Queremos conhecer melhor a realidade de cada integrante do coro. Com essas informações,
+                podemos planejar ações de inclusão e apoio para que todos possam participar plenamente.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-xl flex-shrink-0 leading-none">💜</span>
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--text)]">Por que a sua resposta importa</h2>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-1">
+                Suas respostas orientam decisões que tornam o coro mais acessível e acolhedor.
+                Quanto mais sincero e completo for o preenchimento, melhor conseguiremos ajudar.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* What to expect */}
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 flex flex-col gap-3 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="text-base flex-shrink-0 leading-snug">📋</span>
+            <p className="text-sm text-[var(--text-secondary)] leading-snug">
+              São <strong className="text-[var(--text)] font-semibold">10 seções rápidas</strong> — leva apenas alguns minutos.
+            </p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-base flex-shrink-0 leading-snug">💾</span>
+            <p className="text-sm text-[var(--text-secondary)] leading-snug">
+              Seu progresso é salvo automaticamente — você pode parar e continuar depois.
+            </p>
+          </div>
+        </div>
+
+        {/* LGPD */}
+        <div className="rounded-xl border border-[var(--brand)]/20 bg-[var(--brand-subtle)] px-4 py-3.5 flex gap-3">
+          <span className="text-base flex-shrink-0 leading-snug">🔒</span>
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+            Seus dados estão protegidos. As informações serão tratadas com confidencialidade e usadas
+            exclusivamente para o planejamento interno do coro, em conformidade com a{' '}
+            <strong className="text-[var(--text)] font-semibold">Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)</strong>.
+          </p>
+        </div>
+
+        {/* Start */}
+        <button
+          onClick={onStart}
+          className="w-full py-4 rounded-xl bg-[var(--brand)] text-white text-base font-semibold
+            hover:bg-[var(--brand-hover)] active:scale-[.99] transition-all
+            outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2
+            focus-visible:ring-offset-[var(--bg)]"
+        >
+          Começar questionário →
+        </button>
       </main>
     </div>
   );
@@ -267,7 +379,7 @@ function SuccessScreen() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--text)]">Obrigado!</h1>
           <p className="text-[var(--text-secondary)] mt-2 text-sm leading-relaxed">
-            Sua participação foi registrada com sucesso. O Coral Opus Liberi agradece pela colaboração!
+            Sua participação foi registrada com sucesso. O Coro Opus Liberi agradece pela colaboração!
           </p>
         </div>
         <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 w-full">

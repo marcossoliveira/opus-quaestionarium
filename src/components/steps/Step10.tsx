@@ -41,7 +41,7 @@ export function Step10({ data, onChange }: StepProps) {
       <div className="rounded-xl border border-[var(--border)] bg-[var(--brand-subtle)] px-4 py-3">
         <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
           🔒 <strong>Privacidade:</strong> Suas informações serão utilizadas exclusivamente para fins
-          administrativos e institucionais do Coral Opus Liberi, em conformidade com a LGPD.
+          administrativos e institucionais do Coro Opus Liberi, em conformidade com a LGPD.
           Informações sensíveis (renda, acessibilidade) são tratadas com confidencialidade.
         </p>
       </div>
