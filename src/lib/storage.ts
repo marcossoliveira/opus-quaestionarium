@@ -23,6 +23,7 @@ export function loadFromStorage(): QuestionnaireData | null {
 export function clearStorage(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(`${STORAGE_KEY}-step`);
   } catch {
     // ignore
   }

@@ -28,6 +28,86 @@ import { Step10 } from './steps/Step10';
 
 const STEP_COMPONENTS = [Step1, Step2, Step3, Step4, Step5, Step6, Step7, Step8, Step9, Step10];
 
+// Campos obrigatórios por etapa: a pergunta principal de cada seção + nome.
+// Foto, nome artístico, complemento, área de atuação, campos "Outro",
+// acessibilidade (9) e perguntas abertas (10) ficam opcionais.
+type RequiredField = { key: keyof QuestionnaireData; label: string };
+
+const STEP_REQUIRED: Record<number, RequiredField[]> = {
+  // Etapa 1 é validada dinamicamente em getMissingFields (documentos condicionais).
+  2: [
+    { key: 'escolaridade', label: 'Escolaridade' },
+    { key: 'formacaoMusical', label: 'Formação musical' },
+    { key: 'leituraPartitura', label: 'Leitura de partitura' },
+  ],
+  3: [
+    { key: 'situacaoTrabalho', label: 'Situação de trabalho' },
+    { key: 'rendaFamiliar', label: 'Renda familiar' },
+    { key: 'pessoasDependentes', label: 'Pessoas dependentes' },
+  ],
+  4: [
+    { key: 'meioTransporte', label: 'Meio de transporte' },
+    { key: 'custoDeslocamento', label: 'O custo dificulta o deslocamento?' },
+    { key: 'tempoDeslocamento', label: 'Tempo de deslocamento' },
+  ],
+  5: [
+    { key: 'acessoInternet', label: 'Acesso à internet' },
+    { key: 'possuiSmartphone', label: 'Possui smartphone' },
+    { key: 'facilidadeApps', label: 'Facilidade com aplicativos' },
+  ],
+  6: [
+    { key: 'frequenciaEventos', label: 'Frequência em eventos culturais' },
+    { key: 'custoDificultaEventos', label: 'O custo dificulta o acesso a eventos?' },
+  ],
+  7: [
+    { key: 'dificuldadeCustos', label: 'Dificuldade com os custos do coral' },
+    { key: 'interesseApoio', label: 'Interesse em receber apoio' },
+  ],
+  8: [
+    { key: 'diasDisponiveis', label: 'Dias disponíveis' },
+    { key: 'periodoViavel', label: 'Período viável' },
+    { key: 'rotinaDificulta', label: 'A rotina dificulta a participação?' },
+  ],
+};
+
+// Retorna os rótulos dos campos obrigatórios ainda não preenchidos na etapa.
+// À prova de erro: nunca lança, trata string e array.
+function getMissingFields(step: number, data: QuestionnaireData): string[] {
+  const isEmpty = (v: string | string[]) =>
+    Array.isArray(v) ? v.length === 0 : typeof v !== 'string' || v.trim() === '';
+
+  // Etapa 1: identificação + endereço + documentos (estes são condicionais).
+  if (step === 1) {
+    const missing: string[] = [];
+    if (isEmpty(data.nomeCompleto)) missing.push('Nome completo');
+    if (isEmpty(data.cep)) missing.push('CEP');
+    if (isEmpty(data.rua)) missing.push('Rua / Logradouro');
+    if (isEmpty(data.numero)) missing.push('Número');
+    if (isEmpty(data.bairro)) missing.push('Bairro');
+    if (isEmpty(data.cidade)) missing.push('Cidade');
+    if (data.rgCpfUnificados === 'sim') {
+      if (isEmpty(data.cpf)) missing.push('Número do CIN / CPF');
+    } else {
+      if (isEmpty(data.cpf)) missing.push('CPF');
+      if (isEmpty(data.rg)) missing.push('RG');
+    }
+    if (isEmpty(data.naipe)) missing.push('Naipe');
+    if (isEmpty(data.tempoCoral)) missing.push('Tempo no coral');
+    return missing;
+  }
+
+  const reqs = STEP_REQUIRED[step] ?? [];
+  return reqs.filter(({ key }) => isEmpty(data[key])).map((r) => r.label);
+}
+
+function firstIncompleteStep(data: QuestionnaireData): { step: number; missing: string[] } | null {
+  for (let s = 1; s <= 10; s++) {
+    const missing = getMissingFields(s, data);
+    if (missing.length) return { step: s, missing };
+  }
+  return null;
+}
+
 export function FormWizard() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<QuestionnaireData>(defaultFormData);
@@ -37,6 +117,7 @@ export function FormWizard() {
   const [hasSaved, setHasSaved] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [started, setStarted] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   useEffect(() => {
     const savedData = loadFromStorage();
@@ -66,11 +147,54 @@ export function FormWizard() {
   // Scroll to top-left when changing steps (left:0 resets any stuck horizontal scroll)
   useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); }, [step]);
 
+  // Limpa o aviso de campos obrigatórios assim que o usuário edita algo.
+  useEffect(() => { setMissingFields([]); }, [data]);
+
   const onChange = useCallback((field: keyof QuestionnaireData, value: string | string[]) => {
     setData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
+  function goNext() {
+    const missing = getMissingFields(step, data);
+    if (missing.length) {
+      setMissingFields(missing);
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      return;
+    }
+    setMissingFields([]);
+    setStep((s) => Math.min(10, s + 1));
+  }
+
+  function goToStep(target: number) {
+    if (target <= step) {
+      setMissingFields([]);
+      setStep(target);
+      return;
+    }
+    // Avançar via indicadores: valida cada etapa intermediária.
+    for (let s = step; s < target; s++) {
+      const missing = getMissingFields(s, data);
+      if (missing.length) {
+        setStep(s);
+        setMissingFields(missing);
+        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+    setMissingFields([]);
+    setStep(target);
+  }
+
   async function handleSubmit() {
+    // Garante que nenhuma etapa obrigatória foi pulada (ex.: via indicadores).
+    const incomplete = firstIncompleteStep(data);
+    if (incomplete) {
+      setStep(incomplete.step);
+      setMissingFields(incomplete.missing);
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      return;
+    }
+    setMissingFields([]);
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -182,6 +306,19 @@ export function FormWizard() {
           <StepComponent data={data} onChange={onChange} />
         </div>
 
+        {missingFields.length > 0 && (
+          <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
+            <p className="text-sm font-medium text-red-500">
+              Preencha os campos obrigatórios para continuar:
+            </p>
+            <ul className="mt-1 text-sm text-red-500 list-disc list-inside">
+              {missingFields.map((label) => (
+                <li key={label}>{label}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {submitError && (
           <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
             <p className="text-sm text-red-500">{submitError}</p>
@@ -192,7 +329,7 @@ export function FormWizard() {
         <div className="flex gap-3 mt-5">
           {step > 1 && (
             <Button
-              onPress={() => setStep((s) => s - 1)}
+              onPress={() => { setMissingFields([]); setStep((s) => s - 1); }}
               className="flex-1 py-3.5 rounded-xl border border-[var(--border)] text-sm font-medium
                 text-[var(--text)] hover:bg-[var(--brand-subtle)] hover:border-[var(--brand)]
                 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
@@ -203,7 +340,7 @@ export function FormWizard() {
 
           {!isLastStep ? (
             <Button
-              onPress={() => setStep((s) => s + 1)}
+              onPress={goNext}
               className="flex-[2] py-3.5 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold
                 hover:bg-[var(--brand-hover)] active:scale-[.98] transition-all
                 outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2
@@ -240,7 +377,7 @@ export function FormWizard() {
           {STEPS.map((s) => (
             <button
               key={s.number}
-              onClick={() => setStep(s.number)}
+              onClick={() => goToStep(s.number)}
               aria-label={`Ir para seção ${s.number}: ${s.title}`}
               className={`h-1.5 rounded-full transition-all duration-300 ${s.number === step
                 ? 'w-6 bg-[var(--brand)]'
