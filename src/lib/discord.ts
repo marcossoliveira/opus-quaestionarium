@@ -71,6 +71,8 @@ export async function sendDiscordNotification(data: QuestionnaireData): Promise<
         items: [
           ['👤 Nome completo', v(data.nomeCompleto)],
           ['🎭 Nome artístico', artistico],
+          ['📧 E-mail', v(data.email)],
+          ['📱 Telefone', v(data.telefone)],
           ['🎵 Naipe', naipe],
           ['🗓️ Tempo no coral', v(data.tempoCoral)],
           ...documento,

@@ -237,6 +237,14 @@ export function Step1({ data, onChange }: StepProps) {
     return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
   }
 
+  function formatTelefone(v: string) {
+    const d = v.replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 2) return d ? `(${d}` : '';
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  }
+
   const nomeIgual = data.nomeArtisticoIgualNome === 'sim';
   const unificado = data.rgCpfUnificados === 'sim';
 
@@ -278,6 +286,28 @@ export function Step1({ data, onChange }: StepProps) {
           />
         )}
       </div>
+
+      {/* E-mail */}
+      <FieldInput
+        label="E-mail"
+        value={data.email}
+        onChange={(v) => onChange('email', v)}
+        placeholder="seu@email.com"
+        type="email"
+        inputMode="email"
+        isRequired
+      />
+
+      {/* Telefone */}
+      <FieldInput
+        label="Telefone (com DDD)"
+        value={data.telefone}
+        onChange={(v) => onChange('telefone', formatTelefone(v))}
+        placeholder="(00) 00000-0000"
+        inputMode="tel"
+        maxLength={16}
+        isRequired
+      />
 
       {/* Endereço */}
       <div className="flex flex-col gap-4">

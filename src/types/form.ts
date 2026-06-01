@@ -4,6 +4,8 @@ export interface QuestionnaireData {
   nomeCompleto: string;
   nomeArtistico: string;
   nomeArtisticoIgualNome: string;
+  email: string;
+  telefone: string;
   rgCpfUnificados: string;
   cep: string;
   rua: string;
@@ -76,6 +78,8 @@ export const defaultFormData: QuestionnaireData = {
   nomeCompleto: '',
   nomeArtistico: '',
   nomeArtisticoIgualNome: '',
+  email: '',
+  telefone: '',
   rgCpfUnificados: '',
   cep: '',
   rua: '',

@@ -80,6 +80,8 @@ function getMissingFields(step: number, data: QuestionnaireData): string[] {
   if (step === 1) {
     const missing: string[] = [];
     if (isEmpty(data.nomeCompleto)) missing.push('Nome completo');
+    if (isEmpty(data.email) || !/^\S+@\S+\.\S+$/.test(data.email.trim())) missing.push('E-mail válido');
+    if (data.telefone.replace(/\D/g, '').length < 10) missing.push('Telefone com DDD');
     if (isEmpty(data.cep)) missing.push('CEP');
     if (isEmpty(data.rua)) missing.push('Rua / Logradouro');
     if (isEmpty(data.numero)) missing.push('Número');
