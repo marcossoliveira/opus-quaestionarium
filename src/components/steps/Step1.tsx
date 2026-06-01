@@ -7,6 +7,19 @@ import { RadioOption } from '@/components/ui/RadioOption';
 import { uploadPhoto } from '@/lib/upload';
 import type { StepProps } from '@/types/form';
 
+const MESES: [string, string][] = [
+  ['01', 'Janeiro'], ['02', 'Fevereiro'], ['03', 'Março'], ['04', 'Abril'],
+  ['05', 'Maio'], ['06', 'Junho'], ['07', 'Julho'], ['08', 'Agosto'],
+  ['09', 'Setembro'], ['10', 'Outubro'], ['11', 'Novembro'], ['12', 'Dezembro'],
+];
+const ANO_ATUAL = new Date().getFullYear();
+const ANOS = Array.from({ length: ANO_ATUAL - 1980 + 1 }, (_, i) => String(ANO_ATUAL - i));
+
+const selectClass =
+  'w-full min-w-0 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--card)] ' +
+  'text-sm text-[var(--text)] outline-none transition-all ' +
+  'focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 focus:ring-offset-[var(--card)]';
+
 // ─── Inline checkbox (para opções de conveniência) ───────────────────────────
 
 function InlineCheckbox({
@@ -247,6 +260,7 @@ export function Step1({ data, onChange }: StepProps) {
 
   const nomeIgual = data.nomeArtisticoIgualNome === 'sim';
   const unificado = data.rgCpfUnificados === 'sim';
+  const [anoCoral = '', mesCoral = ''] = (data.tempoCoral || '').split('-');
 
   return (
     <div className="flex flex-col gap-6">
@@ -435,22 +449,39 @@ export function Step1({ data, onChange }: StepProps) {
         />
       )}
 
-      {/* Tempo no coral */}
-      <RadioGroup
-        value={data.tempoCoral}
-        onChange={(v) => onChange('tempoCoral', v)}
-        className="flex flex-col gap-2"
-        isRequired
-      >
-        <Label className="text-sm font-medium text-[var(--text)]">
-          Há quanto tempo você participa do coral? <span className="text-[var(--brand)]">*</span>
-        </Label>
-        <div className="flex flex-col gap-2">
-          {['Menos de 6 meses', '6 meses a 1 ano', '1 a 3 anos', '3 a 5 anos', 'Mais de 5 anos'].map((t) => (
-            <RadioOption key={t} value={t}>{t}</RadioOption>
-          ))}
+      {/* No coral desde (mês + ano) */}
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-medium text-[var(--text)]">
+          Desde quando você participa do coral? <span className="text-[var(--brand)]">*</span>
+        </p>
+        <p className="text-xs text-[var(--text-secondary)]">
+          Se não tiver certeza, informe uma data aproximada (mês e ano).
+        </p>
+        <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
+          <select
+            aria-label="Mês de início no coral"
+            value={mesCoral}
+            onChange={(e) => onChange('tempoCoral', `${anoCoral}-${e.target.value}`)}
+            className={selectClass}
+          >
+            <option value="">Mês</option>
+            {MESES.map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+          <select
+            aria-label="Ano de início no coral"
+            value={anoCoral}
+            onChange={(e) => onChange('tempoCoral', `${e.target.value}-${mesCoral}`)}
+            className={selectClass}
+          >
+            <option value="">Ano</option>
+            {ANOS.map((ano) => (
+              <option key={ano} value={ano}>{ano}</option>
+            ))}
+          </select>
         </div>
-      </RadioGroup>
+      </div>
 
     </div>
   );

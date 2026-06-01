@@ -94,7 +94,7 @@ function getMissingFields(step: number, data: QuestionnaireData): string[] {
       if (isEmpty(data.rg)) missing.push('RG');
     }
     if (isEmpty(data.naipe)) missing.push('Naipe');
-    if (isEmpty(data.tempoCoral)) missing.push('Tempo no coral');
+    if (!/^\d{4}-\d{2}$/.test(data.tempoCoral || '')) missing.push('Desde quando participa do coral (mês e ano)');
     return missing;
   }
 

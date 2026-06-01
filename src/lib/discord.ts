@@ -4,6 +4,20 @@ const COLOR = 0x4206e3;
 
 const v = (s?: string) => (s ?? '').trim();
 
+const MESES_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+// "2023-05" → "Maio de 2023". Mantém valores antigos (faixas de texto) como estão.
+function formatInicioCoral(value?: string): string {
+  const s = v(value);
+  const m = /^(\d{4})-(\d{2})$/.exec(s);
+  if (!m) return s;
+  const mes = MESES_PT[parseInt(m[2], 10) - 1];
+  return mes ? `${mes} de ${m[1]}` : s;
+}
+
 // Select com opção "outro": usa o texto livre quando o valor for 'outro'.
 const sel = (value: string, outro: string) => (value === 'outro' ? v(outro) : v(value));
 
@@ -74,7 +88,7 @@ export async function sendDiscordNotification(data: QuestionnaireData): Promise<
           ['📧 E-mail', v(data.email)],
           ['📱 Telefone', v(data.telefone)],
           ['🎵 Naipe', naipe],
-          ['🗓️ Tempo no coral', v(data.tempoCoral)],
+          ['🗓️ No coral desde', formatInicioCoral(data.tempoCoral)],
           ...documento,
           ['📮 CEP', v(data.cep)],
           ['🏠 Endereço', endereco],
