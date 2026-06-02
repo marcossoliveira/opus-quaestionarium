@@ -69,6 +69,21 @@ body {
   outline: none;
 }
 
+/* Glow pulsante no seletor de foto, pra destacar e incentivar o upload. */
+@keyframes photo-glow {
+  0%, 100% { box-shadow: 0 0 16px -4px var(--brand); }
+  50%      { box-shadow: 0 0 30px 1px var(--brand); }
+}
+.photo-glow {
+  animation: photo-glow 2.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .photo-glow {
+    animation: none;
+    box-shadow: 0 0 22px -2px var(--brand);
+  }
+}
+
 /* iOS Safari dá auto-zoom quando um campo focado tem font-size < 16px.
    Mantém os controles em >= 16px (1rem) — escala junto com o ajuste de fonte da acessibilidade. */
 input, textarea, select {

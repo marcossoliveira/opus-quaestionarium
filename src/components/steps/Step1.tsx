@@ -107,31 +107,42 @@ function PhotoUpload({
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3">
+      {!preview && !uploading && (
+        <div className="text-center">
+          <p className="text-base font-semibold text-[var(--text)]">📸 Bora colocar uma foto sua?</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
+            Assim a gente consegue te conhecer melhor 💜{' '}
+            <span className="text-[var(--text-muted)]">(opcional)</span>
+          </p>
+        </div>
+      )}
       <div className="relative">
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           aria-label={preview ? 'Alterar foto de perfil' : 'Adicionar foto de perfil'}
-          className="relative w-24 h-24 rounded-full overflow-hidden
-            border-2 border-dashed border-[var(--border)]
-            hover:border-[var(--brand)] transition-all duration-200 group
+          className={`relative w-32 h-32 rounded-full overflow-hidden transition-all duration-200 group
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]
-            focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]"
+            focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card)]
+            ${preview
+              ? 'border-2 border-dashed border-[var(--border)] hover:border-[var(--brand)]'
+              : 'border-2 border-[var(--brand)] photo-glow'
+            }`}
           disabled={uploading}
         >
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="Foto de perfil" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-1
+            <div className="w-full h-full flex flex-col items-center justify-center gap-1.5
               bg-[var(--card-soft)] group-hover:bg-[var(--brand-subtle)] transition-colors">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}
-                className="w-7 h-7 text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors">
+                className="w-10 h-10 text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                 <circle cx="12" cy="13" r="4" />
               </svg>
-              <span className="text-[10px] font-medium text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors">
+              <span className="text-xs font-medium text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors">
                 Adicionar
               </span>
             </div>
@@ -139,7 +150,7 @@ function PhotoUpload({
           {preview && !uploading && (
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100
               transition-opacity flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.8} className="w-6 h-6">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.8} className="w-8 h-8">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                 <circle cx="12" cy="13" r="4" />
               </svg>
@@ -147,7 +158,7 @@ function PhotoUpload({
           )}
           {uploading && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <svg className="w-6 h-6 text-white animate-spin" viewBox="0 0 24 24" fill="none">
+              <svg className="w-8 h-8 text-white animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"
                   strokeDasharray="62" strokeDashoffset="20" />
               </svg>
@@ -174,10 +185,11 @@ function PhotoUpload({
       </div>
 
       <div className="text-center">
-        <p className="text-xs text-[var(--text-secondary)]">
-          {uploading ? 'Enviando foto…' : preview ? 'Clique para alterar' : 'Foto de perfil'}
-          {!uploading && <span className="text-[var(--text-muted)] ml-1">(opcional)</span>}
-        </p>
+        {(uploading || preview) && (
+          <p className="text-xs text-[var(--text-secondary)]">
+            {uploading ? 'Enviando foto…' : 'Clique para alterar'}
+          </p>
+        )}
         {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
       </div>
 
