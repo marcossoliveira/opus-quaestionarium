@@ -415,9 +415,10 @@ export function Step1({ data, onChange }: StepProps) {
             />
             <FieldInput
               label="RG"
+              description="Informe também o órgão emissor e o estado. Ex: 1.234.567 SPTC-ES"
               value={data.rg}
               onChange={(v) => onChange('rg', v)}
-              placeholder="00.000.000-0"
+              placeholder="1.234.567 SPTC-ES"
             />
           </div>
         )}
