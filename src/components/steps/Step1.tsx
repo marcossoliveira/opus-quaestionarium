@@ -393,7 +393,7 @@ export function Step1({ data, onChange }: StepProps) {
             if (checked) onChange('cpf', '');
           }}
         >
-          Já possuo o CIN — informarei apenas este documento (número igual ao CPF)
+          Já possuo a CIN — informarei apenas este documento (número igual ao CPF)
         </InlineCheckbox>
 
         {unificado ? (
@@ -405,7 +405,7 @@ export function Step1({ data, onChange }: StepProps) {
             inputMode="numeric"
           />
         ) : (
-          <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
+          <div className="flex flex-col gap-4">
             <FieldInput
               label="CPF"
               value={data.cpf}
